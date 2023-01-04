@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class CustomJoint2D : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+public class CustomJoint2D : MonoBehaviour
 {
     public float sqrDistance;
     public float distance;
@@ -19,31 +19,11 @@ public class CustomJoint2D : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     public Collider2D collider2D;
 
 
-    void Start()
-    {
-        ridgidbody ??= GetComponent<Rigidbody2D>();
-    }
 
-    protected Vector2 bufferDirection;
-    /* public virtual void FixPositon(bool? goToBefore = null)
-     {
-         if (cable.isUnmovable)
-         {
-             return;
-         }
-         cable.SetPosition(position, transform.position);
 
-         if (goToBefore == null || goToBefore == false)
-         {
-             FixConnectedJoint(after, false);
-         }
-         if (goToBefore == null || goToBefore == true)
-         {
-             FixConnectedJoint(before, true);
-         }
+    Vector2 bufferDirection;
 
-     }*/
-    public virtual void NewFixPositon(CustomJoint2D from)
+    public virtual void NewFixPositon(CustomJoint2D from, bool forceAllFix = false)
     {
         if (cable.isUnmovable)
         {
@@ -54,22 +34,27 @@ public class CustomJoint2D : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
         if (after != from)
         {
-            NewFixConnectedJoint(after);
+            NewFixConnectedJoint(after, forceAllFix);
         }
         if (before != from)
         {
-            NewFixConnectedJoint(before);
+            NewFixConnectedJoint(before, forceAllFix);
         }
     }
-    protected Vector3 bufferV3 = new Vector3(0, 0, 0);
+    Vector3 bufferV3 = new Vector3(0, 0, 0);
     protected float originalZ = 0;
-    private void NewFixConnectedJoint(CustomJoint2D joint)
+    private void NewFixConnectedJoint(CustomJoint2D joint, bool forceAllFix = false)
     {
         if (joint != null)
         {
             //  Debug.Log(joint.state.ToFormatedString());
-            if (!joint.state.HasAny(JointState.Freezed, JointState.Connected))
+            if (!joint.state.Has(JointState.Freezed))
             {
+                if (joint.state.Has(JointState.Connected))
+                {
+                    joint.NewFixPositon(null);
+                    return;
+                }
                 bufferDirection = joint.transform.position - transform.position;
 
                 if (bufferDirection.sqrMagnitude > this.sqrDistance)
@@ -82,40 +67,19 @@ public class CustomJoint2D : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
                     bufferV3.z = originalZ;
 
                     joint.transform.position = bufferV3;
+                    joint.NewFixPositon(this);
+
+
+                }
+                else if (forceAllFix) //even when joint hasn't updated BUT forceAllFix is true then still update down the chain
+                {
+                    joint.NewFixPositon(this);
 
                 }
             }
-            joint.NewFixPositon(this);
-
         }
     }
-    /* private void FixConnectedJoint(CustomJoint2D joint, bool goToBefore)
-     {
-         if (joint != null)
-         {
-             Debug.Log(joint.state.ToFormatedString());
-             if (!joint.state.HasAny(JointState.Freezed, JointState.Connected))
-             {
-                 bufferDirection = joint.transform.position - transform.position;
 
-                 if (bufferDirection.sqrMagnitude > this.sqrDistance)
-                 {
-
-                     if (useForce)
-                     {
-                         joint.ridgidbody.AddForce(bufferDirection.normalized * (bufferDirection.sqrMagnitude - this.sqrDistance));
-                     }
-                     else
-                     {
-                         Vector3 v3 = (bufferDirection.normalized * this.sqrDistance);
-                         joint.transform.position = transform.position + v3;
-                     }
-                 }
-             }
-             joint.FixPositon(goToBefore);
-
-         }
-     }*/
     public void InitAndAdd(CustomJoint2D before, float distance, Cable cable)
     {
         this.before = before;
@@ -123,17 +87,26 @@ public class CustomJoint2D : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         this.cable = cable;
         this.distance = distance;
         cable.AddPart(this);
+        cable.SetPosition(position, transform.position);
         originalZ = transform.position.z;
     }
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
 
-    void OnCollisionStay2D(Collision2D collision)
+        if (!cable.isUnmovable && (cable.currentlyColliding == null) && collision.collider.transform.parent != transform.parent)
+        {
+            cable.currentlyColliding ??= this;
+
+        }
+    }
+    private void OnCollisionStay2D(Collision2D collision)
     {
 
         if (!cable.isUnmovable && (cable.currentlyColliding == null || cable.currentlyColliding.Equals(this)) && collision.collider.transform.parent != transform.parent)
         {
-            cable.currentlyColliding ??= this;
+            //  cable.currentlyColliding ??= this;
             // FixPositon();
-            NewFixPositon(this);
+            NewFixPositon(this, true);
 
         }
     }
@@ -145,48 +118,6 @@ public class CustomJoint2D : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         }
 
     }
-
-
-    Vector3 mousePosition;
-    public virtual void OnBeginDrag(PointerEventData eventData)
-    {
-        if (cable.isUnmovable)
-        {
-            return;
-        }
-        state = state.Join(JointState.Dragging);
-    }
-
-    public virtual void OnDrag(PointerEventData eventData)
-    {
-        if (cable.isUnmovable)
-        {
-            return;
-        }
-        mousePosition = Camera.main.ScreenToWorldPoint(eventData.position);
-        mousePosition.z = originalZ;
-        if (Cable.currentlyDragging != cable)
-        {
-            Cable.currentlyDragging = cable;
-        }
-        transform.position = mousePosition;
-        NewFixPositon(this);
-    }
-
-    public virtual void OnEndDrag(PointerEventData eventData)
-    {
-        if (cable.isUnmovable)
-        {
-            return;
-        }
-        state = state.Unjoin(JointState.Dragging);
-
-        if (Cable.currentlyDragging == cable)
-        {
-            Cable.currentlyDragging = null;
-        }
-    }
-
 
 }
 [System.Flags]

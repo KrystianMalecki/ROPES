@@ -11,10 +11,10 @@ GameObject:
   - component: {fileID: 3257395245923809822}
   - component: {fileID: 3257395245923809793}
   - component: {fileID: 3257395245923809792}
-  - component: {fileID: 3257395245923809795}
   - component: {fileID: 741663894785605366}
+  - component: {fileID: 8193073287015273071}
   m_Layer: 0
-  m_Name: Part2
+  m_Name: PartPrefab
   m_TagString: CablePart
   m_Icon: {fileID: 7866945982896999795, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -72,26 +72,6 @@ CircleCollider2D:
   m_Offset: {x: 0, y: 0}
   serializedVersion: 2
   m_Radius: 0.2
---- !u!114 &3257395245923809795
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3257395245923809794}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3ec1a5d5390a60a4783c45e60d8c1146, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  sqrDistance: 0
-  distance: 0
-  before: {fileID: 0}
-  after: {fileID: 0}
-  ridgidbody: {fileID: 3257395245923809793}
-  state: 2
-  position: 0
-  cable: {fileID: 0}
 --- !u!58 &741663894785605366
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -108,3 +88,24 @@ CircleCollider2D:
   m_Offset: {x: 0, y: 0}
   serializedVersion: 2
   m_Radius: 0.5
+--- !u!114 &8193073287015273071
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3257395245923809794}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 578e47e12713e4a4cb18d42cbd803f38, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sqrDistance: 0
+  distance: 0
+  before: {fileID: 0}
+  after: {fileID: 0}
+  ridgidbody: {fileID: 3257395245923809793}
+  state: 2
+  position: 0
+  cable: {fileID: 0}
+  collider2D: {fileID: 3257395245923809792}

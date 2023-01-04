@@ -15,6 +15,7 @@ public class CableGenerator : MonoBehaviour
     {
         GameObject cableObject = Instantiate(cablePrefab, transform.position, Quaternion.identity);
         Cable cable = cableObject.GetComponent<Cable>();
+        cable.cableRenderer.positionCount = length + 2;
 
         CustomJoint2D last = cable.startHead;
         cable.startHead.InitAndAdd(null, distanceBetween, cable);
@@ -24,7 +25,6 @@ public class CableGenerator : MonoBehaviour
         int currentPointInLine = 0;
         const int max = 2;
         Vector2 direction = Vector2.right;
-        cable.cableRenderer.positionCount = length + 2;
 
         for (int i = 0; i < length; i++)
         {
@@ -52,11 +52,11 @@ public class CableGenerator : MonoBehaviour
 
             last.after = currentJoint;
             last = currentJoint;
-            cable.SetPosition(currentJoint.position, currentJoint.transform.position);
+
 
         }
-        cable.endHead.InitAndAdd(last, distanceBetween, cable);
         cable.endHead.transform.position = last.transform.position + (Vector3)direction * distanceBetween;
+        cable.endHead.InitAndAdd(last, distanceBetween, cable);
 
         last.after = cable.endHead;
 
@@ -73,7 +73,7 @@ public class CableGenerator : MonoBehaviour
             if (!EventSystem.current.IsPointerOverGameObject())
             {
 
-            Debug.Log("loop");
+                Debug.Log("loop");
 
                 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
                 pos.z = 0;
@@ -85,7 +85,7 @@ public class CableGenerator : MonoBehaviour
                 foreach (var hit in hits)
                 {
                     hitss += hit.collider.gameObject.name + " ";
-                    if (hit.collider.CompareTag("CableHeadOld"))
+                    if (hit.collider.CompareTag("CableHead"))
                     {
                         closest = null;
                         break;
@@ -106,7 +106,7 @@ public class CableGenerator : MonoBehaviour
                 }
                 if (closest != null)
                 {
-                    joint = closest.GetComponent<CustomJoint2D>();
+                    joint = closest.GetComponent<CablePoint>();
                     pos.z = joint.transform.position.z;
                     joint.transform.position = pos;
 

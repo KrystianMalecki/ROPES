@@ -14,31 +14,20 @@ public class Cable : MonoBehaviour
 
     public LineRenderer cableRenderer;
     public float distanceBetweenParts = 1;
-    public static Cable currentlyDragging;
+    public static Cable currentlyDraggedCable;
     public CustomJoint2D currentlyColliding = null;
-    public delegate void ChangeConnectionSlots();
-    public event ChangeConnectionSlots OnChangeConnectionSlots;
+
+
+    public delegate void ConnectHandler(CableSocket to);
+    /* public event ConnectHandler OnConnectEvent;
+
+     public event ConnectHandler OnDisconnectEvent;*/
 
     public bool isUnmovable;
 
     public void Start()
     {
-        OnChangeConnectionSlots += () =>
-        {
-            if (startSlot != null && endSlot != null)
-            {
-                Debug.Log($"Connection between {startSlot} and {endSlot}!");
-            }
-            else
-            {
-                Debug.Log($"Connection broken!");
-            }
-        };
-    }
-    //todo implement better
-    public void ConnectionChanged()
-    {
-        OnChangeConnectionSlots.Invoke();
+
     }
     public void SetPosition(int at, Vector3 position)
     {
@@ -49,4 +38,19 @@ public class Cable : MonoBehaviour
         points.Add(joint.transform);
         joint.position = points.Count - 1;
     }
+    public void OnConnect()
+    {
+        if (startSlot != null && endSlot != null)
+        {
+            startSlot.OnConnectEvent.Invoke(this, endSlot);
+            endSlot.OnConnectEvent.Invoke(this, startSlot);
+        }
+    }
+    public void OnDisconnect()
+    {
+        startSlot?.OnDisconnectEvent.Invoke();
+        endSlot?.OnDisconnectEvent.Invoke();
+
+    }
+
 }

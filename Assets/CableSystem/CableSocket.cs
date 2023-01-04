@@ -2,23 +2,59 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.EventSystems;
+[System.Serializable]
+public class ConnectEvent : UnityEvent<Cable, CableSocket> { }
+
+[System.Serializable]
+public class DisconnectEvent : UnityEvent { }
 public class CableSocket : MonoBehaviour
 {
-    public static float connectionDistance = Mathf.Pow(3f, 2);
-    public static float unConnectDistance = Mathf.Pow(4f, 2);
+    [SerializeField]
+    float connectDistance = 3f;
+    [SerializeField]
+    float disconnectDistance = 4f;
+    float _connectSqrDistance = 0;
+    float _disconnectSqrDistance = 0;
+
+    public float connectSqrDistance
+    {
+        get
+        {
+            if (_connectSqrDistance == 0)
+            {
+                _connectSqrDistance = connectDistance * connectDistance;
+            }
+            return _connectSqrDistance;
+        }
+    }
+    public float disconnectSqrDistance
+    {
+        get
+        {
+            if (_disconnectSqrDistance == 0)
+            {
+                _disconnectSqrDistance = Mathf.Pow(disconnectDistance, 2);
+            }
+            return _disconnectSqrDistance;
+        }
+    }
 
     public CableHead connectedHead;
     public bool connected => connectedHead != null;
     public Transform connectionPoint;
+    public ConnectEvent OnConnectEvent;
+    public DisconnectEvent OnDisconnectEvent;
+
     private void OnMouseOver()
     {
         if (!connected)
         {
-            CableHead.currentlyDragging?.NewFixPositon(CableHead.currentlyDragging);
-            if (CableHead.currentlyDragging?.nearestSlot == null)
+            CableHead.currentlyDraggedHead?.NewFixPositon(CableHead.currentlyDraggedHead);
+            if (CableHead.currentlyDraggedHead?.nearestSlot == null)
             {
-                CableHead.currentlyDragging?.SetSlotToRotate(this);
+                CableHead.currentlyDraggedHead?.SetSlotToRotate(this);
             }
         }
     }
@@ -26,7 +62,7 @@ public class CableSocket : MonoBehaviour
     {
         if (!connected)
         {
-            CableHead.currentlyDragging?.SetSlotToRotate(this);
+            CableHead.currentlyDraggedHead?.SetSlotToRotate(this);
         }
 
     }
@@ -34,7 +70,7 @@ public class CableSocket : MonoBehaviour
     {
         if (!connected)
         {
-            CableHead.currentlyDragging?.SetSlotToRotate(null);
+            CableHead.currentlyDraggedHead?.SetSlotToRotate(null);
         }
     }
 
@@ -53,7 +89,7 @@ public class CableSocket : MonoBehaviour
         {
             connectedHead.cable.startSlot = this;
         }
-        connectedHead.cable.ConnectionChanged();
+        connectedHead.cable.OnConnect();
 
     }
     public void DisconnectCableHead()
@@ -72,17 +108,22 @@ public class CableSocket : MonoBehaviour
         {
             connectedHead.cable.startSlot = null;
         }
-        connectedHead.cable.ConnectionChanged();
-        connectedHead = null;
+        connectedHead.cable.OnDisconnect();
 
+        connectedHead = null;
     }
+
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(connectionPoint.transform.position, Mathf.Sqrt(connectionDistance));
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(connectionPoint.transform.position, Mathf.Sqrt(unConnectDistance));
+        if (connectionPoint != null)
+        {
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireSphere(connectionPoint.transform.position, connectDistance);
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(connectionPoint.transform.position, disconnectDistance);
+        }
     }
+
 }
 public static class EnumHelper
 {

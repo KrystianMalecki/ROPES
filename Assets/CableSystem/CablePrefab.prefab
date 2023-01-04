@@ -147,7 +147,7 @@ GameObject:
   - component: {fileID: 3228677498020298421}
   - component: {fileID: 3228677498020298423}
   m_Layer: 0
-  m_Name: Cable2
+  m_Name: CablePrefab
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -188,7 +188,7 @@ MonoBehaviour:
   endHead: {fileID: 3228677499247599972}
   startSlot: {fileID: 0}
   endSlot: {fileID: 0}
-  lineRenderer: {fileID: 2829828707773327652}
+  cableRenderer: {fileID: 2829828707773327652}
   distanceBetweenParts: 1
   currentlyColliding: {fileID: 0}
   isUnmovable: 0
@@ -320,9 +320,9 @@ MonoBehaviour:
   state: 2
   position: 0
   cable: {fileID: 3228677498020298423}
+  collider2D: {fileID: 3228677499140825318}
   isEnd: 0
   nearestSlot: {fileID: 0}
-  collider2D: {fileID: 3228677499140825318}
   connectedSlot: {fileID: 0}
 --- !u!58 &3228677499140825318
 CircleCollider2D:
@@ -468,9 +468,9 @@ MonoBehaviour:
   state: 2
   position: 0
   cable: {fileID: 3228677498020298423}
+  collider2D: {fileID: 3228677499247599969}
   isEnd: 1
   nearestSlot: {fileID: 0}
-  collider2D: {fileID: 3228677499247599969}
   connectedSlot: {fileID: 0}
 --- !u!58 &3228677499247599969
 CircleCollider2D:

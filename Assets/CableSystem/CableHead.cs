@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class CableHead : CustomJoint2D
+public class CableHead : CablePoint
 {
 
 
 
-    public static CableHead currentlyDragging;
+    public static CableHead currentlyDraggedHead;
     public bool isEnd;
     CustomJoint2D _closeCablePart;
 
@@ -38,61 +38,17 @@ public class CableHead : CustomJoint2D
     public CableSocket connectedSlot = null;
     public bool connectedToSlot => connectedSlot != null;
 
-    public void Start()
-    {
 
-    }
-    /* public override void FixPositon(bool? fixBefore = null)
-     {
-         if (cable.isUnmovable)
-         {
-             return;
-         }
-
-         base.FixPositon(fixBefore);
-
-
-         if (connectedToSlot)
-         {
-             dir = -connectedSlot.connectionPoint.transform.up;
-
-         }
-         else if (nearSlot)
-         {
-             dir = (nearestSlot.connectionPoint.transform.position - transform.position);
-         }
-         else
-         {
-             dir = -(closeCablePart.transform.position - transform.position);
-
-         }
-
-         dir.originalZ = 0;
-
-         transform.up = dir;
-
-         if (connectedToSlot)
-         {
-             float sqrDistance = (transform.position - closeCablePart.transform.position).sqrMagnitude;
-
-             if (sqrDistance > CableSocket.unConnectDistance)
-             {
-                 connectedSlot.DisconnectCableHead();
-             }
-
-             // closeCablePart?.FixPositon(!fixBefore);
-         }
-     }*/
-    public override void NewFixPositon(CustomJoint2D from)
+    public override void NewFixPositon(CustomJoint2D from, bool forceAllFix = false)
     {
         if (cable.isUnmovable)
         {
             return;
         }
-
-        base.NewFixPositon(from);
-
         UpdateConnection();
+        base.NewFixPositon(from, forceAllFix);
+
+
         UpdateRotation();
 
 
@@ -115,59 +71,44 @@ public class CableHead : CustomJoint2D
 
         dir.z = originalZ;
 
-        transform.up = dir;
+        //   transform.up = dir;
+        //2d look at
+        transform.rotation = Quaternion.Euler(0, 0, (Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg) - 90);
     }
     public void UpdateConnection()
     {
         if (connectedToSlot)
         {
-            float sqrDistanceFromCable = (transform.position - closeCablePart.transform.position).sqrMagnitude;
+            float sqrDistanceFromCable = Vector2.SqrMagnitude(transform.position - closeCablePart.transform.position);
             bool disconnect = false;
-            if (sqrDistanceFromCable > CableSocket.unConnectDistance)
+            if (sqrDistanceFromCable > nearestSlot.disconnectSqrDistance)
             {
                 disconnect = true;
             }
             else
             {
-                float sqrDistanceFromSlot = (transform.position - connectedSlot.transform.position).sqrMagnitude;
-                if (sqrDistanceFromSlot > CableSocket.unConnectDistance)
+                float sqrDistanceFromSlot = Vector2.SqrMagnitude(transform.position - closeCablePart.transform.position);
+
+                if (sqrDistanceFromSlot > nearestSlot.disconnectSqrDistance)
                 {
                     disconnect = true;
                 }
             }
             if (disconnect)
             {
-                Debug.Log("Disconnect");
                 connectedSlot.DisconnectCableHead();
                 NewFixPositon(this);
 
             }
 
-            // closeCablePart?.FixPositon(!fixBefore);
         }
     }
     public void Update()
     {
         if (connectedToSlot)
         {
-            NewFixPositon(this);
-
-            /* if (closeCablePart == after)
-             {
-                 Debug.Log("updating1");
-
-                 closeCablePart?.FixPositon(true);
-                 NewFixPositon(this);
-
-             }
-             else if (closeCablePart == before)
-             {
-                 Debug.Log("updating2");
-
-                 closeCablePart?.FixPositon(false);
-             }*/
+          //  NewFixPositon(this);
         }
-
     }
     public void SetSlotToRotate(CableSocket target)
     {
@@ -181,6 +122,11 @@ public class CableHead : CustomJoint2D
     public override void OnBeginDrag(PointerEventData eventData)
     {
         base.OnBeginDrag(eventData);
+        if (currentlyDraggedHead != this)
+        {
+            currentlyDraggedHead = this;
+        }
+        collider2D.enabled = false;
 
     }
     public override void OnDrag(PointerEventData eventData)
@@ -192,11 +138,7 @@ public class CableHead : CustomJoint2D
         base.OnDrag(eventData);
         UpdateConnection();
         UpdateRotation();
-        if (CableHead.currentlyDragging != this)
-        {
-            CableHead.currentlyDragging = this;
-        }
-        collider2D.enabled = false;
+
     }
     public override void OnEndDrag(PointerEventData eventData)
     {
@@ -205,24 +147,24 @@ public class CableHead : CustomJoint2D
             return;
         }
         base.OnEndDrag(eventData);
+        TryToConnect();
+        if (currentlyDraggedHead == this)
+        {
+            currentlyDraggedHead = null;
+        }
+        collider2D.enabled = true;
+    }
+    public void TryToConnect()
+    {
         if (nearSlot && !connectedToSlot)
         {
-            //calc sqe distance to nearestSlot tranform
             float sqrDistance = (nearestSlot.transform.position - transform.position).sqrMagnitude;
-            if (sqrDistance <= CableSocket.connectionDistance)
+            if (sqrDistance <= nearestSlot.connectSqrDistance)
             {
                 nearestSlot.ConnectCableHead(this);
-                // FixPositon();
                 NewFixPositon(this);
-
             }
 
         }
-        if (CableHead.currentlyDragging == this)
-        {
-            CableHead.currentlyDragging = null;
-        }
-        collider2D.enabled = true;
-
     }
 }
